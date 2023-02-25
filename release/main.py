@@ -1,15 +1,16 @@
 import sqlite3
 import sys
 
-from PyQt5 import uic
+from UI.main1 import Ui_MainWindow
+from UI.addEditCoffeeForm import Ui_Form
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
 
 
-class Widget(QMainWindow):
+class Widget(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('main.ui', self)
+        self.setupUi(self)
         self.pushButton.clicked.connect(self.change)
         self.loadTable()
 
@@ -20,8 +21,9 @@ class Widget(QMainWindow):
         self.loadTable()
 
     def loadTable(self):
-        c = sqlite3.connect(f'coffee.db')
+        c = sqlite3.connect(f'data\\coffee.db')
         rows = c.execute(f"SELECT * from types_of_coffee").fetchall()
+        self.comboBox.clear()
         items = [i[1] for i in rows]
         items.append("добавить новый")
         self.comboBox.addItems(items)
@@ -40,17 +42,17 @@ class Widget(QMainWindow):
         self.connection.close()
 
 
-class Form(QWidget):
+class Form(QWidget, Ui_Form):
     def __init__(self, item, widget):
         super().__init__()
-        uic.loadUi("addEditCoffeeForm.ui", self)
+        self.setupUi(self)
         self.widget = widget
         self.pushButton.clicked.connect(self.update_table)
         self.comboBoxRoasting.addItems([str(i) for i in range(1, 6)])
         self.comboBoxGG.addItems(["ground", "grains"])
         self.item = item
         if self.item != "добавить новый":
-            c = sqlite3.connect(f'coffee.db')
+            c = sqlite3.connect(f'data\\coffee.db')
             rows = c.execute(f'SELECT * from types_of_coffee where name == "{self.item}"').fetchall()
             _, name, roasting, gg, taste, price, volume = rows[0]
             self.lineName.setText(name)
@@ -69,7 +71,7 @@ class Form(QWidget):
         self.close()
 
     def create_new(self):
-        c = sqlite3.connect(f'coffee.db')
+        c = sqlite3.connect(f'data\\coffee.db')
         rows = c.execute(f'SELECT * from types_of_coffee').fetchall()
         idd = len(rows) + 1
         name = self.lineName.text().strip()
@@ -83,7 +85,7 @@ class Form(QWidget):
         c.commit()
 
     def change_exist(self):
-        c = sqlite3.connect(f'coffee.db')
+        c = sqlite3.connect(f'data\\coffee.db')
         rows = c.execute(f'SELECT * from types_of_coffee where name == "{self.item}"').fetchall()
         idd = rows[0][0]
         name = self.lineName.text().strip()
@@ -92,7 +94,7 @@ class Form(QWidget):
         volume = self.lineVolume.text()
         roasting = self.comboBoxRoasting.currentText()
         gg = self.comboBoxGG.currentText()
-        c.execute(f"""Update types_of_coffee set name = '{name}', taste = '{taste}', price = {price},
+        c.execute(f"""Update types_of_coffee set name = '{name}', taste = '{taste}', price = '{price}',
         packing_volume = '{volume}', roasting = {roasting}, ground_grains = '{gg}' where id == {idd}""")
         c.commit()
 
